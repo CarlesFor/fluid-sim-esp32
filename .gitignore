@@ -1,0 +1,14 @@
+# Herramientas locales de publicacion y credenciales
+.publish/
+
+# Archivos generados por herramientas de desarrollo
+.pio/
+build/
+*.bin
+*.elf
+*.hex
+*.map
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
