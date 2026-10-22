@@ -68,14 +68,43 @@ de GPIO27: en reposo se lee `HIGH` y al pulsar se lee `LOW`.
 7. Conecta el ESP32 por USB. En **Herramientas → Placa**, selecciona tu modelo;
    para un DevKit clásico normalmente corresponde **ESP32 Dev Module**.
 8. Selecciona su puerto en **Herramientas → Puerto** y pulsa **Subir**.
-9. Al arrancar, **deja el joystick centrado durante unos dos segundos** para que
-   el programa calibre su posición de reposo.
+9. En el primer arranque, sigue la **calibración guiada de la OLED** que se
+   explica a continuación. La biblioteca `Preferences`, usada para guardarla,
+   viene incluida en el paquete de placas ESP32.
 
 También puedes clonar el repositorio:
 
 ```sh
 git clone https://github.com/CarlesFor/fluid-sim-esp32.git
 ```
+
+## Calibración del joystick
+
+El programa aprende la orientación del joystick a partir de sus lecturas
+reales. No necesita fijar signos ni intercambiar ejes manualmente.
+
+1. Cuando aparezca **«Centra la palanca / Pulsa y suelta SW»**, centra la palanca
+   y pulsa y suelta el botón del joystick.
+2. La pantalla pedirá **DERECHA, IZQUIERDA, ARRIBA y ABAJO**, en ese orden.
+   En cada paso, mueve la palanca hasta el extremo indicado y mantenla quieta
+   aproximadamente un segundo, hasta que cambie el mensaje.
+3. Entre pasos, vuelve al centro cuando lo indique la pantalla. No hace falta
+   pulsar el botón mientras mantienes una dirección.
+4. Al terminar, suelta la palanca para empezar la simulación.
+
+La calibración se guarda en la memoria del ESP32 para los siguientes arranques.
+Para repetirla, **mantén pulsado SW mientras enciendes o reinicias el ESP32**;
+suéltalo cuando aparezca la petición de centrar y vuelve a seguir los pasos.
+Si giras físicamente el módulo respecto a la pantalla, repite la calibración.
+
+Si aparece **«Revisa VRX / VRY»**, las muestras no son coherentes: comprueba
+VRX = GPIO35, VRY = GPIO34, GND común y alimentación a 3,3 V. Pulsa para repetir.
+Si habías conectado el joystick a **5V/VIN**, desconecta la alimentación, pasa
+su VCC a **3V3** y repite la calibración. Sus salidas pueden superar el rango
+de las entradas del ESP32 cuando el módulo se alimenta a 5 V.
+El monitor serie a 115200 baudios muestra las lecturas de cada dirección para
+ayudar a localizar el problema. Un eje desconectado o dos señales que no puedan
+distinguirse requieren revisar el montaje.
 
 ## Cómo usarlo
 
@@ -86,8 +115,9 @@ git clone https://github.com/CarlesFor/fluid-sim-esp32.git
 | Moverla en círculos | Lleva el líquido por las paredes y el techo. |
 | Pulsar el joystick | Reinicia las partículas en el centro. |
 
-La dirección de los ejes depende de cómo esté orientado el módulo. Si la respuesta
-queda invertida, ajusta `INVERT_X` o `INVERT_Y` y vuelve a subir el programa.
+Con la palanca desplazada, la gravedad sigue su dirección sin añadir una fuerza
+hacia abajo. Al volver al centro, vuelve la caída hacia abajo. El líquido tiene
+inercia y puede tardar en cambiar su movimiento.
 
 ## Ajustes del código
 
@@ -96,8 +126,6 @@ Todos estos valores están al principio de
 
 | Constante | Valor inicial | Función |
 | --- | --- | --- |
-| `INVERT_X` | `false` | Invierte el eje horizontal al cambiarlo a `true`. |
-| `INVERT_Y` | `false` | Invierte el eje vertical al cambiarlo a `true`. |
 | `DEAD_ZONE` | `180` | Ignora pequeñas variaciones del joystick en reposo. |
 | `PARTICLE_COUNT` | `240` | Cantidad de partículas de líquido. |
 | `GRAVITY` | `180.0f` | Intensidad de la gravedad. |
@@ -105,7 +133,7 @@ Todos estos valores están al principio de
 | `STIFFNESS` | `3600.0f` | Respuesta de la presión. |
 | `NEAR_STIFFNESS` | `9000.0f` | Separación a corta distancia. |
 
-Para empezar, cambia únicamente los ejes, la zona muerta o la gravedad. Reducir
+Para empezar, cambia únicamente la zona muerta o la gravedad. Reducir
 `PARTICLE_COUNT` a `180` aligera el cálculo y deja menos líquido en pantalla.
 La posición inicial está definida en `resetFluid()`.
 
@@ -129,12 +157,14 @@ Es un modelo visual de líquido, no un cálculo de precisión para ingeniería.
 
 ### El líquido se mueve hacia un lado con la palanca centrada
 
-Reinicia el ESP32 sin tocar la palanca durante la calibración. Si persiste,
-aumenta `DEAD_ZONE` de `180` a `250` y vuelve a subir el código.
+Repite la calibración manteniendo SW al reiniciar. Centra bien la palanca cuando
+se solicite. Si persiste, aumenta `DEAD_ZONE` de `180` a `250` y vuelve a subir
+el código.
 
 ### El joystick responde al revés
 
-Cambia `INVERT_X` o `INVERT_Y` a `true`, según el eje afectado.
+Repite la calibración guiada y mueve la palanca en la dirección que pide cada
+pantalla. Mantén el módulo en la misma orientación durante su uso.
 
 ### No aparece el puerto o falla la subida
 
@@ -157,3 +187,4 @@ README.md          # Cableado e instrucciones
 - [ADC de Arduino-ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html)
 - [Biblioteca Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - [Biblioteca Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
+- [Preferences de Arduino-ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/preferences.html)
